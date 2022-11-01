@@ -6,7 +6,8 @@ let offSetY
 function setup() {
     createCanvas(1920, 1080);
     walls = [
-        new Wall(100, 100, 300, 300),
+        new Wall(100, 100, 100, 70),
+        new Wall(190, 50, 100, 80)
     ]
 
     player = new Player(walls);
@@ -15,8 +16,8 @@ function setup() {
 function draw() {
     background(238, 238, 238)
 
-    offSetX = Math.max(-width / 2, (player.x + player.width / 2) - width / 2)
-    offSetY = (player.y + player.height / 2) - height / 2
+    offSetX = Math.max(-width / 2, (player.pos.x + player.width / 2) - width / 2)
+    offSetY = (player.pos.y + player.height / 2) - height / 2
 
     scale(1.25)
     translate(-offSetX, -offSetY)
