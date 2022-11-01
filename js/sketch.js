@@ -16,9 +16,11 @@ function setup() {
 function draw() {
     background(238, 238, 238)
 
-    offSetX = (player.pos.x + player.width / 2) - width / 2
+    offSetX = Math.max(-width / 2, (player.pos.x + player.width / 2) - width / 2)
     offSetY = (player.pos.y + player.height / 2) - height / 2
 
+    scale(1.25)
+    translate(-offSetX, -offSetY)
     player.draw();
     player.update();
 

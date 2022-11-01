@@ -14,11 +14,6 @@ class Bullet {
         this.height = 16
 
         this.age = 0
-
-        this.hitbox = {
-            x: x,
-            y: y
-        }
     }
 
     draw() {
@@ -33,8 +28,8 @@ class Bullet {
         this.x += this.xSpeed * cos(this.angle)
         this.y += this.ySpeed * sin(this.angle)
 
-        this.hitbox.x += this.xSpeed * cos(this.angle)
-        this.hitbox.y += this.ySpeed * sin(this.angle)
+        this.x += this.xSpeed * cos(this.angle)
+        this.y += this.ySpeed * sin(this.angle)
 
         this.age++
     }
@@ -43,10 +38,10 @@ class Bullet {
         let xSpeed = this.xSpeed * cos(this.angle)
         let ySpeed = this.ySpeed * sin(this.angle)
 
-        let collided = (this.x < object.hitbox.x + object.width &&
-            this.x + this.r > object.hitbox.x &&
-            this.y < object.hitbox.y + object.height &&
-            this.y + this.r > object.hitbox.y)
+        let collided = (this.x < object.x + object.width &&
+            this.x + this.r > object.x &&
+            this.y < object.y + object.height &&
+            this.y + this.r > object.y)
 
         if (!collided) {
             return false

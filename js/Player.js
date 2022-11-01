@@ -1,6 +1,6 @@
 class Player {
     constructor(walls, health = 10) {
-        this.pos = createVector(width / 2, height / 2)
+        this.pos = createVector(500, 500)
         this.angle = 0
 
         this.bullets = []
@@ -17,13 +17,15 @@ class Player {
 
         this.minBulletCooldown = 30
         this.bulletCooldown = 0
+
+        this.speed = 2.5
     }
 
     collidedWith(object) {
-        let collided = (this.pos.x < object.hitbox.x + object.width &&
-            this.pos.x + this.width > object.hitbox.x &&
-            this.pos.y < object.hitbox.y + object.height &&
-            this.pos.y + this.height > object.hitbox.y)
+        let collided = (this.pos.x < object.x + object.width &&
+            this.pos.x + this.width > object.x &&
+            this.pos.y < object.y + object.height &&
+            this.pos.y + this.height > object.y)
 
         if (!collided) {
             return false;
@@ -87,18 +89,19 @@ class Player {
     }
 
     update() {
+        console.log(this.pos);
         if (keyIsDown(65)) {
-            this.xSpeed = -2;
+            this.xSpeed = -this.speed;
         } else if (keyIsDown(68)) {
-            this.xSpeed = 2;
+            this.xSpeed = this.speed;
         } else {
             this.xSpeed = 0
         }
 
         if (keyIsDown(87)) {
-            this.ySpeed = -2;
+            this.ySpeed = -this.speed;
         } else if (keyIsDown(83)) {
-            this.ySpeed = 2;
+            this.ySpeed = this.speed;
         } else {
             this.ySpeed = 0
         }
@@ -119,20 +122,18 @@ class Player {
                 continue
             }
 
-            console.log(collisionDirection);
-
             switch (collisionDirection) {
                 case 'right':
-                    this.pos.x = wall.hitbox.x - this.width
+                    this.pos.x = wall.x - this.width
                     break;
                 case 'left':
-                    this.pos.x = wall.hitbox.x + wall.width
+                    this.pos.x = wall.x + wall.width
                     break;
                 case 'up':
-                    this.pos.y = wall.hitbox.y + wall.height
+                    this.pos.y = wall.y + wall.height
                     break;
                 case 'down':
-                    this.pos.y = wall.hitbox.y - this.height
+                    this.pos.y = wall.y - this.height
                     break;
 
                 default:
@@ -155,6 +156,29 @@ class Player {
         }
 
         this.bulletCooldown++
+    }
+
+    getNearestVertex(object) {
+        // Get the nearest vertex of an object, and return the point
+
+        // get the closer side to the top
+        let closerToTop = (Math.abs(object.y - this.y) < Math.abs(this.y - object.y + object.height))
+
+        console.log(closerToTop);
+
+        // Are we on the left side of the object?
+        if (this.x < object.x) {
+            //                          top-left                   bottom-left               
+            return closerToTop ? [object.x, object.y] : [object.x, object.y + object.height]
+        }
+        // we are on the right side of the object
+        else {
+            //                                                 
+            return closerToTop ?
+                [object.x + object.width, object.y]  // top-right
+                : [object.x + object.width, object.y + object.height] // bottom-left
+
+        }
     }
 
     shoot() {
