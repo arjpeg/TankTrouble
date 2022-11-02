@@ -8,8 +8,6 @@ class Bullet {
         this.xSpeed = 4
         this.ySpeed = 4
 
-        this.r = 16
-
         this.width = 16
         this.height = 16
 
@@ -20,14 +18,11 @@ class Bullet {
         push()
         noStroke()
         fill(178, 146, 230)
-        circle(this.x, this.y, this.r)
+        circle(this.x, this.y, this.width)
         pop()
     }
 
     update() {
-        this.x += this.xSpeed * cos(this.angle)
-        this.y += this.ySpeed * sin(this.angle)
-
         this.x += this.xSpeed * cos(this.angle)
         this.y += this.ySpeed * sin(this.angle)
 
@@ -39,9 +34,9 @@ class Bullet {
         let ySpeed = this.ySpeed * sin(this.angle)
 
         let collided = (this.x < object.x + object.width &&
-            this.x + this.r > object.x &&
+            this.x + this.width > object.x &&
             this.y < object.y + object.height &&
-            this.y + this.r > object.y)
+            this.y + this.width > object.y)
 
         if (!collided) {
             return false
@@ -49,7 +44,7 @@ class Bullet {
 
         if (Math.abs(xSpeed) > Math.abs(ySpeed)) {
             if (xSpeed > 0) {
-                this.x = object.x - this.r
+                this.x = object.x - this.width
             } else {
                 this.x = object.x + object.width
             }
@@ -57,7 +52,7 @@ class Bullet {
             this.xSpeed *= -1
         } else {
             if (ySpeed > 0) {
-                this.y = object.y - this.r
+                this.y = object.y - this.width
             } else {
                 this.y = object.y + object.height
             }

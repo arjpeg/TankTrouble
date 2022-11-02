@@ -16,14 +16,17 @@ function setup() {
 function draw() {
     background(238, 238, 238)
 
-    offSetX = Math.max(-width / 2, (player.pos.x + player.width / 2) - width / 2)
-    offSetY = (player.pos.y + player.height / 2) - height / 2
+    offSetX = Math.max(-width / 2, (player.x + player.width / 2) - width / 2)
+    offSetY = (player.y + player.height / 2) - height / 2
 
     scale(1.25)
     translate(-offSetX, -offSetY)
+
     player.draw();
     player.update();
 
+    player.drawBullets()
+    player.updateBullets()
 
     for (let wall of walls) {
         wall.draw()
@@ -33,7 +36,7 @@ function draw() {
     let allBullets = [...player.bullets]
 
     allBullets.forEach(bullet => {
-        if (bullet.age > 50 && player.collidedWith(bullet)) {
+        if (bullet.age > 50 && collision(player, bullet)) {
             player.health -= 1
             console.log("E");
 
