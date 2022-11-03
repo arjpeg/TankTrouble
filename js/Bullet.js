@@ -1,5 +1,5 @@
 class Bullet {
-    constructor(x, y, angle) {
+    constructor(x, y, angle, _color) {
         this.x = x
         this.y = y
 
@@ -12,12 +12,13 @@ class Bullet {
         this.height = 16
 
         this.age = 0
+        this.color = _color
     }
 
     draw() {
         push()
-        noStroke()
-        fill(178, 146, 230)
+        strokeWeight(3)
+        fill(this.color)
         circle(this.x, this.y, this.width)
         pop()
     }
@@ -27,39 +28,5 @@ class Bullet {
         this.y += this.ySpeed * sin(this.angle)
 
         this.age++
-    }
-
-    collidedWith(object) {
-        let xSpeed = this.xSpeed * cos(this.angle)
-        let ySpeed = this.ySpeed * sin(this.angle)
-
-        let collided = (this.x < object.x + object.width &&
-            this.x + this.width > object.x &&
-            this.y < object.y + object.height &&
-            this.y + this.width > object.y)
-
-        if (!collided) {
-            return false
-        }
-
-        if (Math.abs(xSpeed) > Math.abs(ySpeed)) {
-            if (xSpeed > 0) {
-                this.x = object.x - this.width
-            } else {
-                this.x = object.x + object.width
-            }
-
-            this.xSpeed *= -1
-        } else {
-            if (ySpeed > 0) {
-                this.y = object.y - this.width
-            } else {
-                this.y = object.y + object.height
-            }
-
-            this.ySpeed *= -1
-        }
-
-        return true
     }
 }

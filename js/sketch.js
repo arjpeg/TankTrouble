@@ -6,8 +6,8 @@ let offSetY
 function setup() {
     createCanvas(1920, 1080);
     walls = [
-        new Wall(100, 100, 100, 70),
-        new Wall(190, 50, 100, 80)
+        new Wall(100, 100, 200, 200),
+        new Wall(1700, 0, 200, 100)
     ]
 
     player = new Player(walls);
@@ -16,16 +16,16 @@ function setup() {
 function draw() {
     background(238, 238, 238)
 
-    offSetX = Math.max(-width / 2, (player.x + player.width / 2) - width / 2)
-    offSetY = (player.y + player.height / 2) - height / 2
+    offSetX = (-width / 2, (player.x + player.width / 2) - width / 2) / 2
+    offSetY = (-height / 2, (player.y + player.height / 2) - height / 2) / 2
 
     scale(1.25)
-    translate(-offSetX, -offSetY)
-
-    player.draw();
-    player.update();
+    translate(-Math.max(0, offSetX), -Math.max(0, offSetY))
 
     player.drawBullets()
+    player.draw();
+
+    player.update();
     player.updateBullets()
 
     for (let wall of walls) {
@@ -36,10 +36,8 @@ function draw() {
     let allBullets = [...player.bullets]
 
     allBullets.forEach(bullet => {
-        if (bullet.age > 50 && collision(player, bullet)) {
+        if (bullet.age > 20 && collision(player, bullet)) {
             player.health -= 1
-            console.log("E");
-
             player.bullets.splice(bullet, 1)
         }
     });
