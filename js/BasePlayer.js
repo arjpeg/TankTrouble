@@ -1,5 +1,5 @@
 class BasePlayer {
-    constructor(walls, health = 10, color = null) {
+    constructor(walls, health = 10, color) {
         this.x = 500
         this.y = 500
 
@@ -22,11 +22,13 @@ class BasePlayer {
 
         this.speed = 2.5
 
-        if (color == null) {
-            this.color = [212, 97, 121]
-        } else {
-            this.color = this.generateRandomColor()
-        }
+        this.color = color ? color : this.generateRandomColor()
+    }
+
+    generateRandomColor() {
+        let genRandNum = () => Math.floor(Math.max(50, Math.random() * 256))
+
+        return [genRandNum(), genRandNum(), genRandNum()]
     }
 
     draw() {
