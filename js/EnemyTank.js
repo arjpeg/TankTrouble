@@ -3,8 +3,10 @@ class EnemyTank extends BasePlayer {
         super(walls, health)
     }
 
-    updatePos(x, y) {
+    updatePos(x, y, angle) {
         this.x = x
         this.y = y
+
+        this.angle = angle
     }
 }

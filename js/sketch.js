@@ -4,13 +4,27 @@ let walls = []
 let offSetX
 let offSetY
 
+let enemyTanks = []
+
+const ws = new WebSocket("ws://localhost:8001")
+
+ws.onopen = (e) => console.log("Client successfully connected!")
+ws.onerror = (e) => alert("There was a problem connecting to the server... Please try again later.")
+ws.onmessage = (message) => {
+    let event = JSON.parse(message.data)
+    console.log(event.type);
+
+    if (event.type == "wallData") {
+        // Loop through all the walls and set them
+        for (const wallPos of event.walls) {
+            let { x, y, width, height } = wallPos;
+            walls.push(new Wall(x, y, width, height))
+        }
+    }
+}
+
 function setup() {
     createCanvas(1920, 1080);
-    walls = [
-        new Wall(100, 100, 200, 200),
-        new Wall(1700, 0, 200, 100)
-    ]
-
     player = new Player(walls);
 }
 
