@@ -1,5 +1,6 @@
-let player;
-let walls = [];
+let player
+let walls = []
+
 let offSetX
 let offSetY
 
@@ -16,8 +17,11 @@ function setup() {
 function draw() {
     background(238, 238, 238)
 
-    offSetX = (-width / 2, (player.x + player.width / 2) - width / 2) / 2
-    offSetY = (-height / 2, (player.y + player.height / 2) - height / 2) / 2
+    let vw = window.innerWidth
+    let vh = window.innerHeight
+
+    offSetX = (player.x + player.width / 2) - vw / 2
+    offSetY = (player.y + player.height / 2) - vh / 2
 
     scale(1.25)
     translate(-Math.max(0, offSetX), -Math.max(0, offSetY))
