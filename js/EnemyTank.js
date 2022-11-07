@@ -1,6 +1,7 @@
 class EnemyTank extends BasePlayer {
-    constructor(walls, health = 10) {
-        super(walls, health)
+    constructor(health = 10, name) {
+        super(health, undefined, name)
+        this.name = name
     }
 
     updatePos(x, y, angle) {

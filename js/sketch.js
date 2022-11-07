@@ -1,18 +1,47 @@
+let allBullets = []
+
 let player
 let walls = []
 
 let offSetX
 let offSetY
 
-let enemyTanks = []
+let enemyTanks = {}
+let previousPlayerPos = {}
+let lastShotBullet
 
-const ws = new WebSocket("ws://localhost:8001")
+const ws = new WebSocket(getHost())
 
-ws.onopen = (e) => console.log("Client successfully connected!")
+
+function getHost() {
+    if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
+        return "ws://localhost:8001"
+    } if (window.location.hostname == "10.0.0.60") {
+        return "ws://10.0.0.60:8001"
+    } else {
+        return
+    }
+}
+
+function genRandomBulletId() {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (let i = 0; i < 10; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+ws.onopen = (e) => {
+    console.info("Client successfully connected!")
+}
+
 ws.onerror = (e) => alert("There was a problem connecting to the server... Please try again later.")
+
 ws.onmessage = (message) => {
     let event = JSON.parse(message.data)
-    console.log(event.type);
+    console.log(event.type, event);
 
     if (event.type == "wallData") {
         // Loop through all the walls and set them
@@ -20,12 +49,67 @@ ws.onmessage = (message) => {
             let { x, y, width, height } = wallPos;
             walls.push(new Wall(x, y, width, height))
         }
+    } else if (event.type == "newClient") {
+        console.log(`New tank joined: ${event.name}`);
+        let { name, x, y, angle } = event
+
+        enemyTanks[name] = new EnemyTank(10, name)
+        enemyTanks[name].updatePos(x, y, angle)
+    } else if (event.type == "updatePos") {
+        let { name, x, y, angle } = event
+        enemyTanks[name].updatePos(x, y, angle)
+    } else if (event.type == "playerLeave") {
+        delete enemyTanks[event.name]
+    } else if (event.type == "shoot") {
+        let { player, x, y, angle, bulletId } = event
+        console.log(bulletId);
+        allBullets.push(new Bullet(x, y, angle, enemyTanks[player].color, bulletId))
+    } else if (event.type == "hit") {
+        let { player, bulletId } = event
+        enemyTanks[player].health -= 1
+
+        // Get the bullet with that id, and delete it
+        console.log(allBullets);
+        allBullets.forEach((bullet) => {
+            if (bullet.id == bulletId) {
+                allBullets.splice(bullet, 1)
+            }
+        })
     }
+}
+
+function sendUpdatedPos() {
+    if (previousPlayerPos.x != player.x || previousPlayerPos.y != player.y || previousPlayerPos.angle != player.angle) {
+        ws.send(JSON.stringify({
+            type: 'updatePos',
+            x: player.x,
+            y: player.y,
+            angle: player.angle
+        }))
+    }
+
+    previousPlayerPos.x = player.x
+    previousPlayerPos.y = player.y
+    previousPlayerPos.angle = player.angle
+
+    return
 }
 
 function setup() {
     createCanvas(1920, 1080);
-    player = new Player(walls);
+    let name = prompt("Name:") || "player"
+
+    player = new Player(walls, 10, name);
+
+    ws.send(JSON.stringify({
+        type: 'init',
+        name: name,
+        x: player.x,
+        y: player.y,
+        angle: player.angle
+    }))
+
+    setInterval(sendUpdatedPos, 100) // Send the server player data, every 1/2 second or so 
 }
 
 function draw() {
@@ -34,33 +118,76 @@ function draw() {
     let vw = window.innerWidth
     let vh = window.innerHeight
 
-    offSetX = (player.x + player.width / 2) - vw / 2
-    offSetY = (player.y + player.height / 2) - vh / 2
+    offSetX = -Math.max(0, (player.x + player.width / 2) - vw / 2)
+    offSetY = -Math.max(0, (player.y + player.height / 2) - vh / 2)
 
     scale(1.25)
-    translate(-Math.max(0, offSetX), -Math.max(0, offSetY))
+    translate(offSetX, offSetY)
 
-    player.drawBullets()
+    allBullets.forEach(bullet => {
+        bullet.draw()
+        bullet.update()
+
+        for (const wall of walls) {
+            if (bullet.y < 0 || bullet.y > height) {
+                allBullets.splice(bullet, 1)
+            } else if (bullet.x < 0 || bullet.x > width) {
+                allBullets.splice(bullet, 1)
+            } else if (bullet.age > 400) {
+                allBullets.splice(bullet, 1)
+            }
+
+
+            let collisionDirection = collision(bullet, wall)
+            if (!collisionDirection) { continue }
+
+            if (collisionDirection.axis == "y")
+                bullet.ySpeed *= -1
+            else
+                bullet.xSpeed *= -1
+        }
+
+        if (bullet.age > 30 && collision(player, bullet)) {
+            player.health -= 1
+            allBullets.splice(bullet, 1)
+
+            console.log(bullet, bullet.id);
+
+            ws.send(JSON.stringify({
+                type: 'hit',
+                bulletId: bullet.id
+            }))
+        }
+    });
+
     player.draw();
-
     player.update();
-    player.updateBullets()
+
+    for (const [_, tank] of Object.entries(enemyTanks)) {
+        tank.draw()
+    }
 
     for (let wall of walls) {
         wall.draw()
     }
-
-
-    let allBullets = [...player.bullets]
-
-    allBullets.forEach(bullet => {
-        if (bullet.age > 20 && collision(player, bullet)) {
-            player.health -= 1
-            player.bullets.splice(bullet, 1)
-        }
-    });
 }
 
 function mouseClicked() {
-    player.shoot()
+    if (player.bulletCooldown >= player.minBulletCooldown) {
+
+        let bullet = new Bullet(player.x + player.width / 2, player.y + player.height / 2, player.angle, player.color, genRandomBulletId())
+
+        allBullets.push(bullet)
+        lastShotBullet = bullet
+
+        player.bulletCooldown = 0
+
+        ws.send(JSON.stringify({
+            type: 'shoot',
+            x: player.x,
+            y: player.y,
+            angle: player.angle,
+            bulletId: bullet.id
+        }))
+    }
 }

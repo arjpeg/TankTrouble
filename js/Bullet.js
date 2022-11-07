@@ -1,5 +1,5 @@
 class Bullet {
-    constructor(x, y, angle, _color) {
+    constructor(x, y, angle, _color, id = null) {
         this.x = x
         this.y = y
 
@@ -13,6 +13,8 @@ class Bullet {
 
         this.age = 0
         this.color = _color
+
+        this.id = id
     }
 
     draw() {

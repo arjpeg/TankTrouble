@@ -1,6 +1,17 @@
 class Player extends BasePlayer {
-    constructor(walls, health = 10, color = [212, 97, 121]) {
-        super(walls, health, color)
+    constructor(walls, health = 10, name) {
+        super(health, [212, 97, 121], name)
+
+        this.bullets = []
+        this.walls = walls
+
+        this.x = 810
+        this.y = 525
+
+        this.name = name
+
+        this.minBulletCooldown = 30
+        this.bulletCooldown = 0
     }
 
     update() {
@@ -23,7 +34,7 @@ class Player extends BasePlayer {
         this.x += this.xSpeed
         this.y += this.ySpeed
 
-        this.angle = atan2(mouseY / 1.25 - this.y, mouseX / 1.25 - this.x)
+        this.angle = atan2(mouseY / 1.25 - this.y - offSetY, mouseX / 1.25 - this.x - offSetX)
 
         this.x = Math.max(0, this.x)
         this.x = Math.min(width - this.width, this.x)
@@ -31,6 +42,37 @@ class Player extends BasePlayer {
         this.y = Math.max(0, this.y)
         this.y = Math.min(height - this.height, this.y)
 
-        super.update()
+        for (const wall of this.walls) {
+            let collisionDirection = collision(this, wall)
+
+            if (!collisionDirection) {
+                continue
+            }
+
+            let { direction, vertex } = collisionDirection
+
+            switch (direction) {
+                case 'right':
+                    this.x = vertex[0] - this.width
+                    break;
+                case 'left':
+                    this.x = vertex[0]
+                    break;
+                case 'up':
+                    this.y = vertex[1]
+                    break;
+                case 'down':
+                    this.y = vertex[1] - this.height
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        this.bulletCooldown++
     }
+
+    // shoot() {
+
+    // }
 }
