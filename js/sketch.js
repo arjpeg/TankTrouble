@@ -19,12 +19,13 @@ let font
 let fontBold
 
 function getHost() {
+    return "wss://tanktroubleserver-production.up.railway.app/"
     if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
         return "ws://localhost:8001"
     } if (window.location.hostname == "10.0.0.60") {
         return "ws://10.0.0.60:8001"
     } else {
-        return "ws://tanktroubleserver-production.up.railway.app/"
+        return "wss://tanktroubleserver-production.up.railway.app/"
     }
 }
 
@@ -40,6 +41,14 @@ function genRandomBulletId() {
 
 ws.onopen = (e) => {
     console.info("Client successfully connected!")
+
+    ws.send(JSON.stringify({
+        type: 'init',
+        name: player.name,
+        x: player.x,
+        y: player.y,
+        angle: player.angle
+    }))
 }
 
 ws.onerror = (e) => alert("There was a problem connecting to the server... Please try again later.")
@@ -116,16 +125,7 @@ function setup() {
     let name = prompt("Name:") || "player"
 
     deaths[name] = 0
-
     player = new Player(walls, 10, name);
-
-    ws.send(JSON.stringify({
-        type: 'init',
-        name: name,
-        x: player.x,
-        y: player.y,
-        angle: player.angle
-    }))
 
     setInterval(sendUpdatedPos, 200) // Send the server player data, every 1/2 second or so 
 }
