@@ -62,8 +62,12 @@ class BasePlayer {
         pop()
 
         // Draw the name
+        push()
+        rectMode(CENTER)
         textSize(20)
-        text(this.name, x, y - 20);
+        textFont(font);
+        text(this.name, x, y - 15);
+        pop()
     }
 
 }

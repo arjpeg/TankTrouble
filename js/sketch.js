@@ -10,8 +10,13 @@ let enemyTanks = {}
 let previousPlayerPos = {}
 let lastShotBullet
 
+const START_X = 810, START_Y = 525
 const ws = new WebSocket(getHost())
 
+let deaths = {}
+
+let font
+let fontBold
 
 function getHost() {
     if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
@@ -19,7 +24,7 @@ function getHost() {
     } if (window.location.hostname == "10.0.0.60") {
         return "ws://10.0.0.60:8001"
     } else {
-        return
+        return "ws://tanktroubleserver-production.up.railway.app/"
     }
 }
 
@@ -55,6 +60,9 @@ ws.onmessage = (message) => {
 
         enemyTanks[name] = new EnemyTank(10, name)
         enemyTanks[name].updatePos(x, y, angle)
+
+        deaths[name] = event['deaths']
+
     } else if (event.type == "updatePos") {
         let { name, x, y, angle } = event
         enemyTanks[name].updatePos(x, y, angle)
@@ -62,19 +70,22 @@ ws.onmessage = (message) => {
         delete enemyTanks[event.name]
     } else if (event.type == "shoot") {
         let { player, x, y, angle, bulletId } = event
-        console.log(bulletId);
         allBullets.push(new Bullet(x, y, angle, enemyTanks[player].color, bulletId))
     } else if (event.type == "hit") {
         let { player, bulletId } = event
         enemyTanks[player].health -= 1
 
         // Get the bullet with that id, and delete it
-        console.log(allBullets);
         allBullets.forEach((bullet) => {
             if (bullet.id == bulletId) {
                 allBullets.splice(bullet, 1)
             }
         })
+    } else if (event.type == "death") {
+        let { player } = event
+        deaths[player] += 1
+
+        enemyTanks[player].health = 10
     }
 }
 
@@ -95,9 +106,16 @@ function sendUpdatedPos() {
     return
 }
 
+function preload() {
+    font = loadFont('assets/Poppins-Regular.ttf')
+    fontBold = loadFont('assets/Poppins-Bold.ttf')
+}
+
 function setup() {
     createCanvas(1920, 1080);
     let name = prompt("Name:") || "player"
+
+    deaths[name] = 0
 
     player = new Player(walls, 10, name);
 
@@ -109,7 +127,7 @@ function setup() {
         angle: player.angle
     }))
 
-    setInterval(sendUpdatedPos, 100) // Send the server player data, every 1/2 second or so 
+    setInterval(sendUpdatedPos, 200) // Send the server player data, every 1/2 second or so 
 }
 
 function draw() {
@@ -120,6 +138,8 @@ function draw() {
 
     offSetX = -Math.max(0, (player.x + player.width / 2) - vw / 2)
     offSetY = -Math.max(0, (player.y + player.height / 2) - vh / 2)
+
+    push()
 
     scale(1.25)
     translate(offSetX, offSetY)
@@ -151,12 +171,24 @@ function draw() {
             player.health -= 1
             allBullets.splice(bullet, 1)
 
-            console.log(bullet, bullet.id);
-
             ws.send(JSON.stringify({
                 type: 'hit',
                 bulletId: bullet.id
             }))
+
+            if (player.health <= 0) {
+                // Reset player pos
+                player.x = START_X
+                player.y = START_Y
+
+                player.health = 10
+
+                ws.send(JSON.stringify({
+                    type: 'death'
+                }))
+
+                deaths[player.name]++
+            }
         }
     });
 
@@ -170,6 +202,28 @@ function draw() {
     for (let wall of walls) {
         wall.draw()
     }
+
+    pop()
+
+    // Draw death-"leaderboard"
+    push()
+    let w = vw * 0.15 + 50
+    let h = 70 + (Object.keys(deaths).length * 30)
+
+    translate(vw * 0.8, 25)
+    strokeWeight(5)
+    rect(0, 0, w, h)
+    textFont(font)
+    textSize(30)
+    text("Deaths:", w / 2 - 55, 30)
+    textSize(20)
+
+    let i = 0
+    for (const [name, deathCount] of Object.entries(deaths)) {
+        text(`${name}: ${deathCount}`, 20, 80 + i * 30)
+        i++
+    }
+    pop()
 }
 
 function mouseClicked() {

@@ -5,8 +5,8 @@ class Player extends BasePlayer {
         this.bullets = []
         this.walls = walls
 
-        this.x = 810
-        this.y = 525
+        this.x = START_X
+        this.y = START_Y
 
         this.name = name
 
