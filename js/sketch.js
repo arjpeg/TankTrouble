@@ -18,8 +18,10 @@ let deaths = {}
 let font
 let fontBold
 
+let wsReady = false
+let messageBuffer = []
+
 function getHost() {
-    return "wss://tanktroubleserver-production.up.railway.app/"
     if (window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1") {
         return "ws://localhost:8001"
     } if (window.location.hostname == "10.0.0.60") {
@@ -39,16 +41,21 @@ function genRandomBulletId() {
     return result;
 }
 
+function send(message) {
+    if (wsReady) {
+        messageBuffer.forEach(msg => ws.send(msg))
+        messageBuffer = []
+
+        ws.send(message)
+        return
+    }
+
+    messageBuffer.push(message)
+}
+
 ws.onopen = (e) => {
     console.info("Client successfully connected!")
-
-    ws.send(JSON.stringify({
-        type: 'init',
-        name: player.name,
-        x: player.x,
-        y: player.y,
-        angle: player.angle
-    }))
+    wsReady = true
 }
 
 ws.onerror = (e) => alert("There was a problem connecting to the server... Please try again later.")
@@ -100,7 +107,7 @@ ws.onmessage = (message) => {
 
 function sendUpdatedPos() {
     if (previousPlayerPos.x != player.x || previousPlayerPos.y != player.y || previousPlayerPos.angle != player.angle) {
-        ws.send(JSON.stringify({
+        send(JSON.stringify({
             type: 'updatePos',
             x: player.x,
             y: player.y,
@@ -126,6 +133,14 @@ function setup() {
 
     deaths[name] = 0
     player = new Player(walls, 10, name);
+
+    send(JSON.stringify({
+        type: 'init',
+        name: player.name,
+        x: player.x,
+        y: player.y,
+        angle: player.angle
+    }))
 
     setInterval(sendUpdatedPos, 200) // Send the server player data, every 1/2 second or so 
 }
@@ -171,7 +186,7 @@ function draw() {
             player.health -= 1
             allBullets.splice(bullet, 1)
 
-            ws.send(JSON.stringify({
+            send(JSON.stringify({
                 type: 'hit',
                 bulletId: bullet.id
             }))
@@ -183,7 +198,7 @@ function draw() {
 
                 player.health = 10
 
-                ws.send(JSON.stringify({
+                send(JSON.stringify({
                     type: 'death'
                 }))
 
@@ -236,7 +251,7 @@ function mouseClicked() {
 
         player.bulletCooldown = 0
 
-        ws.send(JSON.stringify({
+        send(JSON.stringify({
             type: 'shoot',
             x: player.x,
             y: player.y,
